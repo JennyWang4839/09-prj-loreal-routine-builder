@@ -368,3 +368,9 @@ searchInput.addEventListener("input", async () => {
 });
 
 initProducts();
+
+window.addEventListener("load", () => {
+  const products = applyFilters();
+  displayProducts(products);
+  renderSelectedProducts();
+});
