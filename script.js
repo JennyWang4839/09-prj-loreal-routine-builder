@@ -20,6 +20,10 @@ let conversationHistory = [];
 
 const generateBtn = document.getElementById("generateRoutine");
 
+const searchInput = document.getElementById("searchInput");
+
+let allProducts = [];
+
 /* Show initial placeholder until user selects a category */
 productsContainer.innerHTML = `
   <div class="placeholder-message">
@@ -169,19 +173,12 @@ clearBtn.addEventListener("click", () => {
 });
 
 /* Filter and display products when category changes */
-categoryFilter.addEventListener("change", async (e) => {
+categoryFilter.addEventListener("change", async () => {
   const products = await loadProducts();
-  const selectedCategory = e.target.value;
 
-  /* filter() creates a new array containing only products 
-     where the category matches what the user selected */
-  const filteredProducts = products.filter(
-    (product) => product.category === selectedCategory,
-  );
+  currentProducts = applyFilters(products);
 
-  currentProducts = filteredProducts;
-
-  displayProducts(filteredProducts);
+  displayProducts(currentProducts);
 });
 
 function addMessage(text, sender) {
@@ -312,6 +309,46 @@ generateBtn.addEventListener("click", async () => {
   }
 });
 
+function applyFilters(products) {
+  const category = categoryFilter.value;
+  const query = searchInput.value.toLowerCase().trim();
+
+  return products.filter(product => {
+    const matchesCategory = category ? product.category === category : true;
+
+    const matchesSearch = query
+      ? product.name.toLowerCase().includes(query) ||
+        product.brand.toLowerCase().includes(query) ||
+        product.description?.toLowerCase().includes(query)
+      : true;
+
+    return matchesCategory && matchesSearch;
+  });
+}
+
+async function initProducts() {
+  const data = await loadProducts();
+  allProducts = data;
+  currentProducts = data;
+}
+
+function applyFilters() {
+  const category = categoryFilter.value;
+  const query = searchInput.value.toLowerCase().trim();
+
+  return allProducts.filter(product => {
+    const matchesCategory = category ? product.category === category : true;
+
+    const matchesSearch = query
+      ? product.name.toLowerCase().includes(query) ||
+        product.brand.toLowerCase().includes(query) ||
+        product.description?.toLowerCase().includes(query)
+      : true;
+
+    return matchesCategory && matchesSearch;
+  });
+}
+
 chatForm.addEventListener("submit", (e) => {
   e.preventDefault(); // stops page reload
   sendMessage();
@@ -322,3 +359,12 @@ userInput.addEventListener("keypress", function(e) {
       sendMessage();
   }
 });
+
+searchInput.addEventListener("input", async () => {
+  const products = await loadProducts();
+
+  currentProducts = applyFilters(products);
+  displayProducts(currentProducts);
+});
+
+initProducts();

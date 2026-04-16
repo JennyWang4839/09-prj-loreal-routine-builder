@@ -59,6 +59,20 @@ body {
   border-color: #E3A535;
 }
 
+.search-section {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#searchInput {
+  flex: 1;
+  padding: 16px;
+  font-size: 18px;
+  border: 2px solid #E3A535;
+  border-radius: 8px;
+}
+
 /* chat section */
 .chatbox {
   margin: 40px 0;
