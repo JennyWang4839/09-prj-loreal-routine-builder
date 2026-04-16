@@ -4,9 +4,15 @@ const productsContainer = document.getElementById("productsContainer");
 const chatForm = document.getElementById("chatForm");
 const chatWindow = document.getElementById("chatWindow");
 
-let selectedProducts = [];
+const STORAGE_KEY = "selectedProducts";
+
+let selectedProducts = loadSelectedProductsFromStorage();
 
 const selectedContainer = document.getElementById("selectedProductsList");
+
+const workerUrl = "https://loreal-openai-api.jennywang745.workers.dev/";
+
+const clearBtn = document.getElementById("clearSelections");
 
 /* Show initial placeholder until user selects a category */
 productsContainer.innerHTML = `
@@ -87,6 +93,8 @@ function toggleProductSelection(productId) {
   displayProducts(currentProducts);
 
   renderSelectedProducts();
+
+  saveSelectedProducts();
 }
 
 function renderSelectedProducts() {
@@ -120,10 +128,38 @@ function renderSelectedProducts() {
 function removeSelectedProduct(productId) {
   selectedProducts = selectedProducts.filter((p) => p.id != productId);
 
+  saveSelectedProducts();
+  
   renderSelectedProducts();
+
+  displayProducts(currentProducts);
 
   categoryFilter.dispatchEvent(new Event("change"));
 }
+
+function saveSelectedProducts() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedProducts));
+}
+
+function loadSelectedProductsFromStorage() {
+  const data = localStorage.getItem(STORAGE_KEY);
+  
+  return data ? JSON.parse(data) : [];
+}
+
+clearBtn.addEventListener("click", () => {
+  selectedProducts = [];
+
+  localStorage.removeItem(STORAGE_KEY);
+
+  renderSelectedProducts();
+  
+  displayProducts(currentProducts);
+  
+  document.querySelectorAll(".product-card").forEach(card => {
+    card.classList.remove("selected");
+  });
+});
 
 /* Filter and display products when category changes */
 categoryFilter.addEventListener("change", async (e) => {
@@ -141,9 +177,58 @@ categoryFilter.addEventListener("change", async (e) => {
   displayProducts(filteredProducts);
 });
 
-/* Chat form submission handler - placeholder for OpenAI integration */
+async function sendMessage() {
+  const message = "You: " + userInput.value.trim() + "\n\n";
+
+  if (!message) return;
+
+  addMessage(message, "user");
+  userInput.value = "";
+
+  try {
+    const response = await fetch(workerUrl, {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+          messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "user", content: message }
+          ],
+      })
+    });
+
+    const data = await response.json();
+    const botReply = data.choices[0].message.content + "\n\n";
+
+    addMessage(botReply, "bot");
+
+  } 
+
+  catch (error) {
+    addMessage("Sorry, something went wrong. Please try again.", "bot");
+    console.error(error);
+  }
+}
+
+// Set initial message
+chatWindow.textContent = "👋 Hello! How can I help you today?\n";
+
+/* Handle form submit */
 chatForm.addEventListener("submit", (e) => {
   e.preventDefault();
 
+  sendMessage();
+  // When using Cloudflare, you'll need to POST a `messages` array in the body,
+  // and handle the response using: data.choices[0].message.content
+
+  // Show message
   chatWindow.innerHTML = "Connect to the OpenAI API for a response!";
+});
+
+userInput.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        sendMessage();
+    }
 });
