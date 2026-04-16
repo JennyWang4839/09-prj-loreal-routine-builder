@@ -14,6 +14,12 @@ const workerUrl = "https://loreal-openai-api.jennywang745.workers.dev/";
 
 const clearBtn = document.getElementById("clearSelections");
 
+const userInput = document.getElementById("userInput");
+
+let conversationHistory = [];
+
+const generateBtn = document.getElementById("generateRoutine");
+
 /* Show initial placeholder until user selects a category */
 productsContainer.innerHTML = `
   <div class="placeholder-message">
@@ -156,6 +162,7 @@ clearBtn.addEventListener("click", () => {
   
   displayProducts(currentProducts);
   
+
   document.querySelectorAll(".product-card").forEach(card => {
     card.classList.remove("selected");
   });
@@ -177,58 +184,141 @@ categoryFilter.addEventListener("change", async (e) => {
   displayProducts(filteredProducts);
 });
 
+function addMessage(text, sender) {
+  const div = document.createElement("div");
+  div.className = sender;
+
+  div.innerText = text; // IMPORTANT: keeps formatting readable
+  div.style.whiteSpace = "pre-wrap";
+  div.style.lineHeight = "1.6";
+  div.style.marginBottom = "12px";
+
+  chatWindow.appendChild(div);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
 async function sendMessage() {
-  const message = "You: " + userInput.value.trim() + "\n\n";
+  const rawMessage = userInput.value.trim();
+  if (!rawMessage) return;
 
-  if (!message) return;
-
-  addMessage(message, "user");
+  addMessage(rawMessage, "user");
   userInput.value = "";
+
+  conversationHistory.push({
+    role: "user",
+    content: rawMessage
+  });
 
   try {
     const response = await fetch(workerUrl, {
       method: "POST",
-      headers: {
-          "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-          messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: message }
-          ],
+        messages: [
+          {
+            role: "system",
+            content: `
+              You are a beauty assistant.
+
+              Rules:
+              - Only answer skincare, haircare, makeup, fragrance, grooming
+              - Stay consistent with earlier routine if provided
+              - Use conversation history for context
+              `
+          },
+          ...conversationHistory
+        ]
       })
     });
 
     const data = await response.json();
-    const botReply = data.choices[0].message.content + "\n\n";
+    const botReply = data.choices[0].message.content;
+
+    conversationHistory.push({
+      role: "assistant",
+      content: botReply
+    });
 
     addMessage(botReply, "bot");
 
-  } 
-
-  catch (error) {
-    addMessage("Sorry, something went wrong. Please try again.", "bot");
+  } catch (error) {
     console.error(error);
+    addMessage("Sorry, something went wrong.", "bot");
   }
 }
 
-// Set initial message
-chatWindow.textContent = "👋 Hello! How can I help you today?\n";
+generateBtn.addEventListener("click", async () => {
+  if (selectedProducts.length === 0) {
+    addMessage("Please select at least one product.", "bot");
+    return;
+  }
 
-/* Handle form submit */
+  const payload = selectedProducts.map(p => ({
+    name: p.name,
+    brand: p.brand,
+    category: p.category,
+    description: p.description
+  }));
+
+  const systemPrompt = `
+    You are a professional beauty advisor.
+
+    Create a personalized routine using ONLY the provided products.
+
+    Rules:
+    - Use ONLY the products provided
+    - Organize into morning/evening steps
+    - Explain order of use
+    - Keep it simple and practical
+    - If products are insufficient, suggest gaps briefly
+    `;
+
+  conversationHistory.push({
+    role: "user",
+    content: JSON.stringify(payload)
+  });
+
+  try {
+    const response = await fetch(workerUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...conversationHistory
+        ]
+      })
+    });
+
+    const data = await response.json();
+    const routine = data.choices[0].message.content;
+
+    console.log(data.choices[0].message.content);
+
+    conversationHistory.push({
+      role: "assistant",
+      content: routine
+    });
+
+    addMessage("✨ Your Personalized Routine:\n\n" + routine, "bot");
+
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+  } 
+  
+  catch (err) {
+    console.error(err);
+    addMessage("Failed to generate routine. Try again.", "bot");
+  }
+});
+
 chatForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-
+  e.preventDefault(); // stops page reload
   sendMessage();
-  // When using Cloudflare, you'll need to POST a `messages` array in the body,
-  // and handle the response using: data.choices[0].message.content
-
-  // Show message
-  chatWindow.innerHTML = "Connect to the OpenAI API for a response!";
 });
 
 userInput.addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
-        sendMessage();
-    }
+  if (e.key === "Enter") {
+      sendMessage();
+  }
 });
