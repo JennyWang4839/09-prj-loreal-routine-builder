@@ -7,7 +7,7 @@
 
 /* —— body + fonts —— */
 body {
-  font-family: "Montserrat", Arial, Helvetica, sans-serif;
+  font-family: 'Helvetica Now', Helvetica, Arial, sans-serif;
   color: #333;
   display: flex;
   justify-content: center;
@@ -23,6 +23,7 @@ body {
   text-align: center;
   padding-top: 50px;
   padding-bottom: 10px;
+  color: #E3A535;
 }
 
 .logo {
@@ -46,7 +47,7 @@ body {
   width: 100%;
   padding: 16px;
   font-size: 18px;
-  border: 2px solid #000;
+  border: 2px solid #E3A535;
   border-radius: 8px;
   cursor: pointer;
   background-color: white;
@@ -55,13 +56,13 @@ body {
 
 .search-section select:focus {
   outline: none;
-  border-color: #666;
+  border-color: #E3A535;
 }
 
 /* chat section */
 .chatbox {
   margin: 40px 0;
-  border: 2px solid #000;
+  border: 2px solid #E3A535;
   border-radius: 8px;
   padding: 26px;
 }
@@ -127,7 +128,7 @@ body {
 }
 
 .chat-form button:hover {
-  background: #666666;
+  background: #E3A535;
 }
 
 .chat-form button:focus {
@@ -167,7 +168,7 @@ body {
 }
 
 .site-footer a:hover {
-  color: #666666;
+  color: #E3A535;
 }
 
 /* products grid */
@@ -180,7 +181,7 @@ body {
 
 .product-card {
   flex: 0 1 calc(33.333% - 14px);
-  border: 1px solid #ccc;
+  border: 1px solid #000;
   padding: 15px;
   border-radius: 4px;
   display: flex;
@@ -217,7 +218,7 @@ body {
 .selected-products {
   margin: 40px 0;
   padding: 20px;
-  border: 2px solid #000;
+  border: 2px solid #E3A535;
   border-radius: 8px;
 }
 
@@ -247,7 +248,7 @@ body {
 }
 
 .generate-btn:hover {
-  background: #666;
+  background: #E3A535;
 }
 
 .generate-btn i {
