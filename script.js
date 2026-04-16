@@ -27,7 +27,7 @@ function displayProducts(products) {
   productsContainer.innerHTML = products
     .map((product) => {
       const isSelected = selectedProducts.some(
-        (p) => p.id === product.id
+        (p) => p.id == product.id
       );
 
       return `
@@ -36,6 +36,12 @@ function displayProducts(products) {
           <div class="product-info">
             <h3>${product.name}</h3>
             <p>${product.brand}</p>
+
+            <button class="toggle-desc-btn">View Details</button>
+
+            <div class="product-description">
+              ${product.description || "No description available."}
+            </div>
           </div>
         </div>
       `;
@@ -43,10 +49,26 @@ function displayProducts(products) {
     .join("");
 
   document.querySelectorAll(".product-card").forEach((card) => {
-    card.addEventListener("click", () => {
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".toggle-desc-btn")) return;
+
       const productId = card.getAttribute("data-id");
 
       toggleProductSelection(productId);
+    });
+  });
+
+  document.querySelectorAll(".toggle-desc-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      const desc = btn.nextElementSibling;
+
+      desc.classList.toggle("show");
+
+      btn.textContent = desc.classList.contains("show")
+        ? "Hide Details"
+        : "View Details";
     });
   });
 }
